@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-!nubvu@0e$p^r$p_vrv6!)(8c(lye%3m3fen12@5gp+(3!l4qm
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['plittlefield.pythonanywhere.com']
 
 
 # Application definition
