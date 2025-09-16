@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Top Reviews</h1>
+  <ul class="list-group">
+    {% for review in reviews %}
+      <li class="list-group-item">
+        <strong>{{ review.user.username }}</strong> on 
+        <em>{{ review.movie.name }}</em>:
+        <p>{{ review.comment }}</p>
+        <span class="badge bg-success">👍 {{ review.upvotes }}</span>
+        <br>
+        <small class="text-muted">Posted on {{ review.date|date:"M d, Y H:i" }}</small>
+        <br>
+        <a href="{% url 'upvote_review' review.id %}" class="btn btn-sm btn-primary mt-2">Upvote</a>
+      </li>
+    {% empty %}
+      <li class="list-group-item">No reviews yet.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

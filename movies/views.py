@@ -60,3 +60,14 @@ def delete_review(request, id, review_id):
     review = get_object_or_404(Review, id=review_id, user=request.user)
     review.delete()
     return redirect('movies.show', id=id)
+
+def top_reviews(request):
+    reviews = Review.top_reviews(limit=20)  # or however many you want
+    return render(request, "movies/top_reviews.html", {"reviews": reviews})
+
+def upvote_review(request, review_id):
+    review = get_object_or_404(Review, pk=review_id)
+    review.upvotes += 1
+    review.save()
+    return redirect("top_reviews")
+
