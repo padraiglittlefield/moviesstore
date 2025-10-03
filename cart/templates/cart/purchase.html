@@ -1,16 +1,245 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <div class="p-3">
-<div class="container">
-<div class="row mt-3">
-<div class="col mx-auto mb-3">
-<h2>Purchase Completed</h2>
-<hr />
-<p>Congratulations, purchase completed. Order
-number is: <b>#{{ template_data.order_id }}</b>
-</p>
+    <div class="container">
+        <div class="row mt-3">
+            <div class="col mx-auto mb-3">
+                <h2>Purchase Completed</h2>
+                <hr />
+                <p>Congratulations, purchase completed. Order
+                    number is: <b>#{{ template_data.order_id }}</b>
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal for feedback -->
+{% if template_data.show_feedback_popup %}
+<div id="feedbackModal" class="modal-overlay">
+    <div class="modal">
+        <h3>How was your checkout experience?</h3>
+        <form id="feedbackForm" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_name">Name (optional):</label>
+                <input type="text" name="name" id="id_name" maxlength="100" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="id_statement">Feedback:</label>
+                <textarea name="statement" id="id_statement" required class="form-control" rows="4" placeholder="Tell us about your checkout experience..."></textarea>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-success">Submit Feedback</button>
+                <button type="button" id="skipFeedback" class="btn btn-secondary">Skip</button>
+            </div>
+        </form>
+        <div id="feedbackMessage" class="hidden"></div>
+    </div>
 </div>
-</div>
-</div>
+{% endif %}
 {% endblock content %}
+
+{% block extra_css %}
+<style>
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal h3 {
+        margin-top: 0;
+        color: #333;
+        text-align: center;
+    }
+
+    .modal form {
+        margin-top: 20px;
+    }
+
+    .modal .form-group {
+        margin-bottom: 15px;
+    }
+
+    .modal label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .modal .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+
+    .modal textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .modal .form-buttons {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .modal .btn {
+        padding: 10px 20px;
+        margin: 0 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+    }
+
+    .modal .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .modal .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .modal .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .error-message {
+        color: #dc3545;
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 5px;
+    }
+
+    .success-message {
+        color: #155724;
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 5px;
+    }
+
+    .error-message ul {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('feedbackModal');
+    
+    if (!modal) return; // Exit if modal doesn't exist
+    
+    const form = document.getElementById('feedbackForm');
+    const skipBtn = document.getElementById('skipFeedback');
+    const messageDiv = document.getElementById('feedbackMessage');
+
+    console.log('Modal initialized'); // Debug log
+
+    // Skip feedback
+    skipBtn.addEventListener('click', function() {
+        console.log('Skip clicked'); // Debug log
+        modal.style.display = 'none';
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log('Form submitted'); // Debug log
+        
+        const formData = new FormData(form);
+        
+        fetch('{% url "checkout_feedback" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Response received:', data); // Debug log
+            if (data.success) {
+                messageDiv.innerHTML = '<div class="success-message">' + data.message + '</div>';
+                messageDiv.classList.remove('hidden');
+                form.style.display = 'none';
+                
+                // Hide modal after 2 seconds
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 2000);
+            } else {
+                let errorHtml = '<div class="error-message">Please correct the following errors:<ul>';
+                for (let field in data.errors) {
+                    for (let error of data.errors[field]) {
+                        errorHtml += '<li>' + field + ': ' + error + '</li>';
+                    }
+                }
+                errorHtml += '</ul></div>';
+                messageDiv.innerHTML = errorHtml;
+                messageDiv.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            messageDiv.innerHTML = '<div class="error-message">An error occurred. Please try again.</div>';
+            messageDiv.classList.remove('hidden');
+        });
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            console.log('Clicked outside modal'); // Debug log
+            modal.style.display = 'none';
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display !== 'none') {
+            modal.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock extra_js %}

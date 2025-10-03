@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-plus-circle"></i> Create Movie Petition</h3>
+                </div>
+                <div class="card-body">
+                    {% if template_data.error %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> {{ template_data.error }}
+                    </div>
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="movie_title" class="form-label">Movie Title <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="movie_title" 
+                                   name="movie_title" 
+                                   placeholder="Enter the movie title you want to petition" 
+                                   value="{{ template_data.movie_title|default:'' }}"
+                                   required>
+                            <div class="form-text">Enter the name of the movie you'd like to see added to the store.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="5" 
+                                      placeholder="Explain why this movie should be added to the catalog..."
+                                      required>{{ template_data.description|default:'' }}</textarea>
+                            <div class="form-text">Provide details about why this movie should be added. Include information like genre, director, year, or why it's popular.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'petitions.index' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Petition
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <h5><i class="fas fa-info-circle"></i> How it works:</h5>
+                <ol class="mb-0">
+                    <li>Submit your movie petition with a clear title and description</li>
+                    <li>Other users can vote "Yes" or "No" on your petition</li>
+                    <li>Admins will review popular petitions and consider adding them to the catalog</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
